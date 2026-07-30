@@ -55,11 +55,11 @@ Como parte da evolução contínua do projeto, os próximos passos incluem:
 ```text
 StockFlow/
  ├── src/
- │    ├── DataBase/      # ConnectionFactory e Script SQL
- │    ├── Model/         # Entidades de domínio (Produto, Cliente, Venda, etc.)
- │    ├── Repository/    # Camada de acesso ao banco de dados
- │    ├── Service/       # Regras de negócio da aplicação
- │    ├── Util/          # Manipulação do console e leituras de teclado
- │    └── Main/          # Ponto de entrada da aplicação (Main.java)
+ │    ├── database/      # ConnectionFactory e Script SQL
+ │    ├── model/         # Entidades de domínio (Produto, Cliente, Venda, etc.)
+ │    ├── repository/    # Camada de acesso ao banco de dados
+ │    ├── service/       # Regras de negócio da aplicação
+ │    ├── util/          # Manipulação do console e leituras de teclado
+ │    └── main/          # Ponto de entrada da aplicação (main.java)
  ├── pom.xml             # Dependências e configurações do Maven
  └── README.md           # Documentação do projeto
