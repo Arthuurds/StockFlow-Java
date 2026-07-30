@@ -15,7 +15,7 @@ O **StockFlow** é um sistema completo de gerenciamento de estoque e controle de
 
 | Menu Principal | Listagem de Produtos |
 | :---: | :---: |
-| ![Menu](./docs/menu.png) | ![Produtos](./docs/produtos.png) |
+| ![Menu](./Menu.png) | ![Produtos](./Produtos.png) |
 
 ---
 
