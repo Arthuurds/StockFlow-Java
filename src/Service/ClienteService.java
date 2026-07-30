@@ -60,5 +60,19 @@ public class ClienteService {
         if (cliente.getCpfCnpj() == null || cliente.getCpfCnpj().trim().isEmpty()) {
             throw new IllegalArgumentException("O CPF/CNPJ do cliente é obrigatório.");
         }
+
+        // --- ADICIONE AQUI: Sanitização e Validação ---
+        String docLimpo = cliente.getCpfCnpj().replaceAll("\\D", "");
+
+        if (docLimpo.length() == 11) {
+            if (!Util.ValidarDocumento.isCpfValido(docLimpo)) {
+                throw new IllegalArgumentException("O CPF informado é inválido.");
+            }
+        } else if (docLimpo.length() != 14) {
+            throw new IllegalArgumentException("O documento deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ).");
+        }
+
+        // Salva o documento formatado apenas com números
+        cliente.setCpfCnpj(docLimpo);
     }
 }

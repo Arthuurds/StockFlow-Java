@@ -192,7 +192,7 @@ public class Menu {
             String senha = Imput.lerString("Senha");
             String perfil = Imput.lerString("Perfil (ADMIN/OPERADOR)");
 
-            usuarioService.salvar(new Usuario(nome, login, senha, perfil));
+            usuarioService.cadastrarUsuario(new Usuario(nome, login, senha, perfil));
             Console.exibirSucesso("Usuário cadastrado com sucesso!");
         } else if (op == 2) {
             usuarioService.listarTodos().forEach(System.out::println);

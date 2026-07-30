@@ -1,5 +1,6 @@
 package Repository;
 
+import DTO.RelatorioVendaDTO;
 import DataBase.ConnectionFactory;
 import Model.Cliente;
 
@@ -14,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -210,5 +212,35 @@ public class VendaRepository {
             }
         }
         return venda;
+    }
+    public List<RelatorioVendaDTO> buscarVendasPorPeriodo(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
+        String sql = "SELECT v.id, c.nome AS cliente_nome, u.login AS usuario_login, v.data_venda, v.valor_total " +
+                "FROM vendas v " +
+                "JOIN clientes c ON v.cliente_id = c.id " +
+                "JOIN usuarios u ON v.usuario_id = u.id " +
+                "WHERE v.data_venda BETWEEN ? AND ? " +
+                "ORDER BY v.data_venda DESC";
+
+        List<RelatorioVendaDTO> relatorio = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setTimestamp(1, java.sql.Timestamp.valueOf(inicio));
+            stmt.setTimestamp(2, java.sql.Timestamp.valueOf(fim));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    relatorio.add(new RelatorioVendaDTO(
+                            rs.getLong("id"),
+                            rs.getString("cliente_nome"),
+                            rs.getString("usuario_login"),
+                            rs.getTimestamp("data_venda").toLocalDateTime(),
+                            rs.getBigDecimal("valor_total")
+                    ));
+                }
+            }
+        }
+        return relatorio;
     }
 }
