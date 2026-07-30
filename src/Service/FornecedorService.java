@@ -1,17 +1,17 @@
 package Service;
 
 import Model.Fornecedor;
-import Repository.FornecedorRepository;
+import Repository.FornecedorRepositoryImpl;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public class FornecedorService {
 
-    private final FornecedorRepository fornecedorRepository;
+    private final FornecedorRepositoryImpl fornecedorRepository;
 
     public FornecedorService() {
-        this.fornecedorRepository = new FornecedorRepository();
+        this.fornecedorRepository = new FornecedorRepositoryImpl();
     }
 
     public Fornecedor salvar(Fornecedor fornecedor) throws IllegalArgumentException, SQLException {
@@ -36,7 +36,7 @@ public class FornecedorService {
 
     public void atualizar(Fornecedor fornecedor) throws IllegalArgumentException, SQLException {
         if (fornecedor.getId() == null) {
-            throw new IllegalArgumentException("ID é obrigatório para atualizar o fornecedor.");
+            throw new IllegalArgumentException("ID é obrigatório para atualizarEstoque o fornecedor.");
         }
         buscarPorId(fornecedor.getId());
         validarFornecedor(fornecedor);
@@ -49,7 +49,7 @@ public class FornecedorService {
     }
 
     private void validarFornecedor(Fornecedor fornecedor) {
-        if (fornecedor.getNome() == null || fornecedor.getNome().trim().isEmpty()) {
+        if (fornecedor.getNomeJuridico() == null || fornecedor.getNomeJuridico().trim().isEmpty()) {
             throw new IllegalArgumentException("Nome do fornecedor é obrigatório.");
         }
         if (fornecedor.getCnpj() == null || fornecedor.getCnpj().trim().isEmpty()) {

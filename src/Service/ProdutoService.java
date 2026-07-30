@@ -2,6 +2,7 @@ package Service;
 
 import Model.Produto;
 import Repository.ProdutoRepository;
+import Repository.ProdutoRepositoryImpl;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -9,10 +10,16 @@ import java.util.List;
 
 public class ProdutoService {
 
+    // 1. O tipo da variável passa a ser a INTERFACE
     private final ProdutoRepository produtoRepository;
 
     public ProdutoService() {
-        this.produtoRepository = new ProdutoRepository();
+        this.produtoRepository = new ProdutoRepositoryImpl();
+    }
+
+    // Construtor flexível para Injeção de Dependência em testes unitários
+    public ProdutoService(ProdutoRepository produtoRepository) {
+        this.produtoRepository = produtoRepository;
     }
 
     public Produto salvar(Produto produto) throws IllegalArgumentException, SQLException {
@@ -39,7 +46,7 @@ public class ProdutoService {
         if (produto.getId() == null) {
             throw new IllegalArgumentException("ID do produto é obrigatório para atualização.");
         }
-        buscarPorId(produto.getId()); // Garante que o produto existe
+        buscarPorId(produto.getId()); // Garante que o produto existe antes de alterar
         validarProduto(produto);
         produtoRepository.atualizar(produto);
     }
@@ -49,13 +56,51 @@ public class ProdutoService {
         produtoRepository.deletar(id);
     }
 
+    // === MOVIMENTAÇÕES DE ESTOQUE ===
+
+    /**
+     * Atualiza o estoque diretamente no banco.
+     * Aceita valores positivos (soma) ou negativos (subtração com validação).
+     */
+    public void atualizarEstoque(Long produtoId, int quantidade) throws IllegalArgumentException, SQLException {
+        if (produtoId == null || produtoId <= 0) {
+            throw new IllegalArgumentException("ID de produto inválido para atualização de estoque.");
+        }
+
+        Produto produto = buscarPorId(produtoId);
+
+        // Se for uma baixa de estoque (quantidade negativa), valida se há saldo suficiente
+        if (quantidade < 0) {
+            int quantidadeParaDescontar = Math.abs(quantidade);
+            if (produto.getQuantidadeEstoque() < quantidadeParaDescontar) {
+                throw new IllegalArgumentException(
+                        "Estoque insuficiente! Estoque atual: " + produto.getQuantidadeEstoque() +
+                                " | Tentativa de baixa: " + quantidadeParaDescontar
+                );
+            }
+        }
+
+        produtoRepository.atualizarEstoque(produtoId, quantidade);
+    }
+
+    /**
+     * Adiciona unidades ao estoque existente.
+     */
     public void darEntradaEstoque(Long produtoId, Integer quantidade) throws IllegalArgumentException, SQLException {
         if (quantidade == null || quantidade <= 0) {
             throw new IllegalArgumentException("A quantidade de entrada deve ser maior que zero.");
         }
-        Produto produto = buscarPorId(produtoId);
-        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() + quantidade);
-        produtoRepository.atualizar(produto);
+        atualizarEstoque(produtoId, quantidade);
+    }
+
+    /**
+     * Remove unidades do estoque existente com segurança.
+     */
+    public void darBaixaEstoque(Long produtoId, Integer quantidade) throws IllegalArgumentException, SQLException {
+        if (quantidade == null || quantidade <= 0) {
+            throw new IllegalArgumentException("A quantidade de baixa deve ser maior que zero.");
+        }
+        atualizarEstoque(produtoId, -quantidade);
     }
 
     private void validarProduto(Produto produto) throws IllegalArgumentException {

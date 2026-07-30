@@ -103,7 +103,7 @@ public class Compra {
     @Override
     public String toString() {
         String nomeProduto = (produto != null) ? produto.getNome() : "N/A";
-        String nomeFornecedor = (fornecedor != null) ? fornecedor.getNome() : "N/A";
+        String nomeFornecedor = (fornecedor != null) ? fornecedor.getNomeJuridico() : "N/A";
         return String.format("Compra [ID: %d | Data: %s | Produto: %s | Fornecedor: %s | Qtd: %d | Total: R$ %.2f]",
                 id, dataCompra, nomeProduto, nomeFornecedor, quantidade, valorTotal);
     }

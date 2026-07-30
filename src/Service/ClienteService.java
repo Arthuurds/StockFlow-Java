@@ -1,17 +1,17 @@
 package Service;
 
 import Model.Cliente;
-import Repository.ClienteRepository;
+import Repository.ClienteRepositoryImpl;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public class ClienteService {
 
-    private final ClienteRepository clienteRepository;
+    private final ClienteRepositoryImpl clienteRepository;
 
     public ClienteService() {
-        this.clienteRepository = new ClienteRepository();
+        this.clienteRepository = new ClienteRepositoryImpl();
     }
 
     public Cliente salvar(Cliente cliente) throws IllegalArgumentException, SQLException {

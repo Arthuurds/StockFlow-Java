@@ -1,7 +1,7 @@
 package Service;
 
 import Model.Usuario;
-import Repository.UsuarioRepository;
+import Repository.UsuarioRepositoryImpl;
 import Util.Password;
 
 import java.sql.SQLException;
@@ -9,10 +9,10 @@ import java.util.List;
 
 public class UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioRepositoryImpl usuarioRepository;
 
     public UsuarioService() {
-        this.usuarioRepository = new UsuarioRepository();
+        this.usuarioRepository = new UsuarioRepositoryImpl();
     }
 
     /**

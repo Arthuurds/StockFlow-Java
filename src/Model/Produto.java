@@ -96,7 +96,7 @@ public class Produto {
 
     @Override
     public String toString() {
-        String nomeFornecedor = (fornecedor != null) ? fornecedor.getNome() : "N/A";
+        String nomeFornecedor = (fornecedor != null) ? fornecedor.getNomeJuridico() : "N/A";
         return String.format("Produto [ID: %d | Nome: %s | Categoria: %s | Preço: R$ %.2f | Estoque: %d | Fornecedor: %s]",
                 id, nome, categoria, preco, quantidadeEstoque, nomeFornecedor);
     }

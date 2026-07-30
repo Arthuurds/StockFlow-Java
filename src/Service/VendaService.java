@@ -6,6 +6,7 @@ import Exception.EstoqueInsuficienteException;
 import Model.ItemVenda;
 import Model.Venda;
 import Repository.VendaRepository;
+import Repository.VendaRepositoryImpl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,7 +22,7 @@ public class VendaService {
 
     // Construtor do VendaService
     public VendaService() {
-        this.vendaRepository = new VendaRepository();
+        this.vendaRepository = new VendaRepositoryImpl();
     }
 
     /**
@@ -57,7 +58,7 @@ public class VendaService {
                 }
 
                 // Deduz o estoque do produto
-                atualizarEstoqueProduto(conn, item.getProduto().getId(), item.getQuantidade());
+                atualizarEstoque(conn, item.getProduto().getId(), item.getQuantidade());
             }
 
             // 4. Insere a Venda no Banco de Dados
@@ -118,7 +119,7 @@ public class VendaService {
         }
     }
 
-    private void atualizarEstoqueProduto(Connection conn, long produtoId, int quantidadeVendida) throws SQLException {
+    private void atualizarEstoque(Connection conn, long produtoId, int quantidadeVendida) throws SQLException {
         String sql = "UPDATE produtos SET quantidade_estoque = quantidade_estoque - ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quantidadeVendida);

@@ -3,7 +3,7 @@ package Model;
 public class Fornecedor {
 
     private Long id;
-    private String nome;
+    private String nomeJuridico;
     private String cnpj;
     private String email;
     private String telefone;
@@ -14,7 +14,7 @@ public class Fornecedor {
 
     // Construtor sem ID (para novos cadastros)
     public Fornecedor(String nome, String cnpj, String email, String telefone) {
-        this.nome = nome;
+        this.nomeJuridico = nome;
         this.cnpj = cnpj;
         this.email = email;
         this.telefone = telefone;
@@ -23,7 +23,7 @@ public class Fornecedor {
     // Construtor completo (para mapeamento a partir do banco de dados)
     public Fornecedor(Long id, String nome, String cnpj, String email, String telefone) {
         this.id = id;
-        this.nome = nome;
+        this.nomeJuridico = nome;
         this.cnpj = cnpj;
         this.email = email;
         this.telefone = telefone;
@@ -38,12 +38,12 @@ public class Fornecedor {
         this.id = id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getNomeJuridico() {
+        return nomeJuridico;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setNomeJuridico(String nome) {
+        this.nomeJuridico = nome;
     }
 
     public String getCnpj() {
@@ -73,6 +73,6 @@ public class Fornecedor {
     @Override
     public String toString() {
         return String.format("Fornecedor [ID: %d | Nome: %s | CNPJ: %s | E-mail: %s | Tel: %s]",
-                id, nome, cnpj, email, telefone);
+                id, nomeJuridico, cnpj, email, telefone);
     }
 }
