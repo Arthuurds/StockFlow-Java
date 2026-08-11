@@ -29,14 +29,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-# Pastas de compilação
-/target/
-/out/
-
-# Arquivos de configurações de IDEs
+# Arquivos da IDE (IntelliJ)
 .idea/
 *.iml
-.settings/
 
-# Arquivos do sistema operacional
-Thumbs.db
+# Pasta de compilação
+target/
