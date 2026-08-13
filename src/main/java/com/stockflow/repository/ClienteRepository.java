@@ -1,16 +1,13 @@
 package com.stockflow.repository;
 
 import com.stockflow.model.Cliente;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.sql.SQLException;
-import java.util.List;
+import java.util.Optional;
 
-public interface ClienteRepository {
-
-    Cliente salvar(Cliente cliente) throws SQLException;
-    Cliente buscarPorId(Long id) throws SQLException;
-    Cliente buscarPorCpfCnpj(String cpfCnpj) throws SQLException;
-    List<Cliente> listarTodos() throws SQLException;
-    void atualizar(Cliente cliente) throws SQLException;
-    void deletar(Long id) throws SQLException;
+@Repository
+public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+    Optional<Cliente> findByCpfCnpj(String cpfCnpj);
+    boolean existsByCpfCnpj(String cpfCnpj);
 }

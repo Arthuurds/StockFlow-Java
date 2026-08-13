@@ -2,60 +2,46 @@ package com.stockflow.service;
 
 import com.stockflow.model.Fornecedor;
 import com.stockflow.repository.FornecedorRepository;
-import com.stockflow.repository.FornecedorRepositoryImpl;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
 import java.util.List;
 
+
+@Service
+@RequiredArgsConstructor
 public class FornecedorService {
 
     private final FornecedorRepository fornecedorRepository;
 
-    public FornecedorService() {
-        this.fornecedorRepository = new FornecedorRepositoryImpl();
+    @Transactional(readOnly = true)
+    public List<Fornecedor> listarTodos() {
+        return fornecedorRepository.findAll();
     }
 
-
-    public Fornecedor salvar(Fornecedor fornecedor) throws IllegalArgumentException, SQLException {
-        validarFornecedor(fornecedor);
-        return fornecedorRepository.salvar(fornecedor);
+    @Transactional(readOnly = true)
+    public Fornecedor buscarPorId(Long id){
+        return fornecedorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Fornecedor não encontrado com esse Id: " + id));
     }
 
-    public List<Fornecedor> listarTodos() throws SQLException {
-        return fornecedorRepository.listarTodos();
+    @Transactional
+    public Fornecedor salvar(Fornecedor fornecedor){
+        fornecedorRepository.findByCnpj(fornecedor.getCnpj())
+                .ifPresent(existente -> {
+                    if (!existente.getId().equals(fornecedor.getId())) {
+                        throw new RuntimeException("Já existe outro fornecedor cadastrado com este CNPJ!");
+                    }
+                });
+        return fornecedorRepository.save(fornecedor);
     }
 
-    public Fornecedor buscarPorId(Long id) throws IllegalArgumentException, SQLException {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID inválido para fornecedor.");
+    @Transactional
+    public void deletar(Long id){
+        if (!fornecedorRepository.existsById(id)) {
+            throw new RuntimeException("Forncedor não encontrado para exclusão!");
         }
-        Fornecedor fornecedor = fornecedorRepository.buscarPorId(id);
-        if (fornecedor == null) {
-            throw new IllegalArgumentException("Fornecedor não encontrado.");
-        }
-        return fornecedor;
-    }
-
-    public void atualizar(Fornecedor fornecedor) throws IllegalArgumentException, SQLException {
-        if (fornecedor.getId() == null) {
-            throw new IllegalArgumentException("ID é obrigatório para atualizar o fornecedor.");
-        }
-        buscarPorId(fornecedor.getId());
-        validarFornecedor(fornecedor);
-        fornecedorRepository.atualizar(fornecedor);
-    }
-
-    public void deletar(Long id) throws IllegalArgumentException, SQLException {
-        buscarPorId(id);
-        fornecedorRepository.deletar(id);
-    }
-
-    private void validarFornecedor(Fornecedor fornecedor) {
-        if (fornecedor.getNomeJuridico() == null || fornecedor.getNomeJuridico().trim().isEmpty()) {
-            throw new IllegalArgumentException("Nome do fornecedor é obrigatório.");
-        }
-        if (fornecedor.getCnpj() == null || fornecedor.getCnpj().trim().isEmpty()) {
-            throw new IllegalArgumentException("CNPJ do fornecedor é obrigatório.");
-        }
+        fornecedorRepository.deleteById(id);
     }
 }

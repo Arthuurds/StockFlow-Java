@@ -1,114 +1,95 @@
 package com.stockflow.service;
 
-import com.stockflow.DTO.RelatorioVendaDTO;
-import com.stockflow.exception.EstoqueInsuficienteException;
-import com.stockflow.model.ItemVenda;
-import com.stockflow.model.Venda;
+import com.stockflow.model.*;
+import com.stockflow.repository.ClienteRepository;
 import com.stockflow.repository.ProdutoRepository;
-import com.stockflow.repository.ProdutoRepositoryImpl;
+import com.stockflow.repository.UsuarioRepository;
 import com.stockflow.repository.VendaRepository;
-import com.stockflow.repository.VendaRepositoryImpl;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Service
+@RequiredArgsConstructor
 public class VendaService {
 
     private final VendaRepository vendaRepository;
     private final ProdutoRepository produtoRepository;
+    private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public VendaService() {
-        this.vendaRepository = new VendaRepositoryImpl();
-        this.produtoRepository = new ProdutoRepositoryImpl();
+    @Transactional(readOnly = true)
+    public List<Venda> listarTodas(){
+        return vendaRepository.findAll();
     }
 
-
-    public boolean realizarVenda(Venda venda) throws EstoqueInsuficienteException, SQLException {
-
-        if (venda == null || venda.getCliente() == null || venda.getUsuario() == null) {
-            throw new IllegalArgumentException("Venda, cliente e usuário responsável são obrigatórios.");
-        }
-
-        Connection conn = null;
-
-        try {
-            conn = ConnectionFactory.getConnection();
-            conn.setAutoCommit(false);
-
-            for (ItemVenda item : venda.getItens()) {
-                int estoqueAtual = produtoRepository.buscarEstoqueAtual(item.getProduto().getId(), conn);
-
-                if (item.getQuantidade() > estoqueAtual) {
-                    throw new EstoqueInsuficienteException(
-                            "Estoque insuficiente para o produto: " + item.getProduto().getNome() +
-                                    ". Disponível: " + estoqueAtual + ", Solicitado: " + item.getQuantidade()
-                    );
-                }
-
-                produtoRepository.darBaixaEstoque(item.getProduto().getId(), item.getQuantidade(), conn);
-            }
-
-            long vendaId = vendaRepository.salvar(venda, conn);
-            venda.setId(vendaId);
-
-            for (ItemVenda item : venda.getItens()) {
-                vendaRepository.salvarItem(vendaId, item, conn);
-            }
-
-            conn.commit();
-            System.out.println("✅ Venda #" + vendaId + " realizada e estoque atualizado com sucesso!");
-            return true;
-
-        } catch (EstoqueInsuficienteException e) {
-            if (conn != null) {
-                conn.rollback();
-            }
-            throw e;
-
-        } catch (SQLException e) {
-            if (conn != null) {
-                conn.rollback();
-            }
-            System.err.println("❌ Erro ao processar venda no banco de dados. Transação cancelada.");
-            throw e;
-
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    @Transactional(readOnly = true)
+    public Venda buscarPorId(Long id){
+        return vendaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Venda não encontrada com o ID: " + id));
     }
 
-    public List<RelatorioVendaDTO> gerarRelatorioPorPeriodo(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-        if (inicio == null || fim == null) {
-            throw new IllegalArgumentException("As datas inicial e final são obrigatórias.");
-        }
-        if (inicio.isAfter(fim)) {
-            throw new IllegalArgumentException("A data inicial não pode ser posterior à data final.");
+    @Transactional
+    public Venda realizarVenda(Venda venda) {
+
+        // 1. Validação de itens
+        if (venda.getItens() == null || venda.getItens().isEmpty()) {
+            throw new RuntimeException("Uma venda não pode ser realizada sem itens!");
         }
 
-        return vendaRepository.buscarVendasPorPeriodo(inicio, fim);
-    }
-
-    public List<Venda> listarTodas() throws SQLException {
-        return vendaRepository.listarTodas();
-    }
-
-    public Venda buscarPorId(Long id) throws SQLException {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID de venda inválido.");
+        // 2. Busca e reanexa o Cliente cadastrado no banco (Evita Erro 1996)
+        if (venda.getCliente() != null && venda.getCliente().getId() != null) {
+            Cliente cliente = clienteRepository.findById(venda.getCliente().getId())
+                    .orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + venda.getCliente().getId()));
+            venda.setCliente(cliente);
         }
-        Venda venda = vendaRepository.buscarPorId(id);
-        if (venda == null) {
-            throw new IllegalArgumentException("Venda não encontrada com o ID: " + id);
+
+        // 3. Busca e reanexa o Usuário cadastrado no banco (Evita Erro 1996)
+        if (venda.getUsuario() != null && venda.getUsuario().getId() != null) {
+            Usuario usuario = usuarioRepository.findById(venda.getUsuario().getId())
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado com ID: " + venda.getUsuario().getId()));
+            venda.setUsuario(usuario);
         }
-        return venda;
+
+        BigDecimal valorTotalVenda = BigDecimal.ZERO;
+
+        // 4. Processa cada item, estoque e vincula as chaves
+        for (ItemVenda item : venda.getItens()) {
+
+            item.setVenda(venda);
+
+            Produto produto = produtoRepository.findById(item.getProduto().getId())
+                    .orElseThrow(() -> new RuntimeException("Produto ID " + item.getProduto().getId() + " não encontrado!"));
+
+            if (produto.getQuantidadeEstoque() < item.getQuantidade()) {
+                throw new RuntimeException("Quantidade de estoque insuficiente para o produto: " + produto.getNome() +
+                        " | Solicitado: " + item.getQuantidade() + " | Em estoque: " + produto.getQuantidadeEstoque());
+            }
+
+            // Atualiza estoque do produto
+            produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - item.getQuantidade());
+            produtoRepository.save(produto);
+
+            // Congela preço e associa o produto gerenciado
+            item.setProduto(produto);
+            item.setPrecoUnitario(produto.getPreco());
+
+            // Soma o subtotal e calcula o item
+            item.calcularSubtotal();
+            valorTotalVenda = valorTotalVenda.add(item.getSubtotal());
+        }
+
+        // 5. Define valor total e data
+        venda.setValorTotal(valorTotalVenda);
+        if (venda.getDataVenda() == null) {
+            venda.setDataVenda(LocalDateTime.now());
+        }
+
+        // 6. Salva a venda e em cascata os seus itens
+        return vendaRepository.save(venda);
     }
 }

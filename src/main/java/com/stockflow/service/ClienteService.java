@@ -2,78 +2,43 @@ package com.stockflow.service;
 
 import com.stockflow.model.Cliente;
 import com.stockflow.repository.ClienteRepository;
-import com.stockflow.repository.ClienteRepositoryImpl;
-import com.stockflow.util.ValidarDocumento;
-
-import java.sql.SQLException;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import java.util.List;
 
+
+@Service
+@RequiredArgsConstructor
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
 
-    public ClienteService() {
-        this.clienteRepository = new ClienteRepositoryImpl();
+    @Transactional(readOnly = true)
+    public List<Cliente> listarTodos(){
+        return clienteRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Cliente buscarPorId(Long id){
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado com o Id: "+ id));
     }
 
 
-    public Cliente salvar(Cliente cliente) throws IllegalArgumentException, SQLException {
-        validarCliente(cliente);
-
-        Cliente existente = clienteRepository.buscarPorCpfCnpj(cliente.getCpfCnpj());
-        if (existente != null) {
-            throw new IllegalArgumentException("Já existe um cliente cadastrado com este CPF/CNPJ.");
+    @Transactional
+    public Cliente salvar(Cliente cliente){
+        if (cliente.getId() == null && clienteRepository.existsByCpfCnpj(cliente.getCpfCnpj())) {
+            throw new RuntimeException("Já existe um cliente cadastrado com esse CPF/CNPJ");
         }
-        return clienteRepository.salvar(cliente);
+        return clienteRepository.save(cliente);
     }
 
-    public List<Cliente> listarTodos() throws SQLException {
-        return clienteRepository.listarTodos();
-    }
-
-    public Cliente buscarPorId(Long id) throws IllegalArgumentException, SQLException {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID inválido para busca de cliente.");
+    @Transactional
+    public void deletar(Long id){
+        if (!clienteRepository.existsById(id)){
+            throw new RuntimeException("Cliente não encontrado para a exclusão");
         }
-        Cliente cliente = clienteRepository.buscarPorId(id);
-        if (cliente == null) {
-            throw new IllegalArgumentException("Cliente não encontrado.");
-        }
-        return cliente;
-    }
-
-    public void atualizar(Cliente cliente) throws IllegalArgumentException, SQLException {
-        if (cliente.getId() == null) {
-            throw new IllegalArgumentException("ID do cliente é obrigatório para atualização.");
-        }
-        buscarPorId(cliente.getId());
-        validarCliente(cliente);
-        clienteRepository.atualizar(cliente);
-    }
-
-    public void deletar(Long id) throws IllegalArgumentException, SQLException {
-        buscarPorId(id);
-        clienteRepository.deletar(id);
-    }
-
-    private void validarCliente(Cliente cliente) {
-        if (cliente.getNome() == null || cliente.getNome().trim().isEmpty()) {
-            throw new IllegalArgumentException("O nome do cliente é obrigatório.");
-        }
-        if (cliente.getCpfCnpj() == null || cliente.getCpfCnpj().trim().isEmpty()) {
-            throw new IllegalArgumentException("O CPF/CNPJ do cliente é obrigatório.");
-        }
-
-        String docLimpo = cliente.getCpfCnpj().replaceAll("\\D", "");
-
-        if (docLimpo.length() == 11) {
-            if (!ValidarDocumento.isCpfValido(docLimpo)) {
-                throw new IllegalArgumentException("O CPF informado é inválido.");
-            }
-        } else if (docLimpo.length() != 14) {
-            throw new IllegalArgumentException("O documento deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ).");
-        }
-
-        cliente.setCpfCnpj(docLimpo);
+        clienteRepository.deleteById(id);
     }
 }

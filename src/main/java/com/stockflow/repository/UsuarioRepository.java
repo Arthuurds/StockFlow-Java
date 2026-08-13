@@ -1,13 +1,14 @@
 package com.stockflow.repository;
 
 import com.stockflow.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.sql.SQLException;
-import java.util.List;
+import java.util.Optional;
 
-public interface UsuarioRepository {
-    Usuario salvar(Usuario usuario) throws SQLException;
-    Usuario buscarPorId(Long id) throws SQLException;
-    Usuario buscarPorLogin(String login) throws SQLException;
-    List<Usuario> listarTodos() throws SQLException;
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
+
+    Optional<Usuario> findByLogin(String login);
+    boolean existsByLogin(String login);
 }

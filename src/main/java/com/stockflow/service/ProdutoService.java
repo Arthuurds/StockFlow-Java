@@ -2,111 +2,72 @@ package com.stockflow.service;
 
 import com.stockflow.model.Produto;
 import com.stockflow.repository.ProdutoRepository;
-import com.stockflow.repository.ProdutoRepositoryImpl;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.List;
 
+
+@Service
+@RequiredArgsConstructor
 public class ProdutoService {
 
     // 1. O tipo da variável passa a ser a INTERFACE
     private final ProdutoRepository produtoRepository;
 
-    public ProdutoService() {
-        this.produtoRepository = new ProdutoRepositoryImpl();
+    @Transactional(readOnly = true)
+    public List<Produto> listarTodos(){
+        return produtoRepository.findAll();
     }
 
-    public Produto salvar(Produto produto) throws IllegalArgumentException, SQLException {
-        validarProduto(produto);
-        return produtoRepository.salvar(produto);
+    @Transactional(readOnly = true)
+    public Produto buscarPorId(Long id){
+        return produtoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado com o Id: " + id));
     }
 
-    public List<Produto> listarTodos() throws SQLException {
-        return produtoRepository.listarTodos();
+    @Transactional(readOnly = true)
+    public List<Produto> buscarPorCategoria(String categoria){
+        return produtoRepository.findByCategoria(categoria);
     }
 
-    public Produto buscarPorId(Long id) throws IllegalArgumentException, SQLException {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID inválido para busca.");
+    @Transactional(readOnly = true)
+    public List<Produto> buscarPorNome(String nome){
+        return produtoRepository.findByNomeContainingIgnoreCase(nome);
+    }
+
+    @Transactional
+    public Produto salvar(Produto produto){
+        if (produto.getPreco() == null || produto.getPreco().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("O preço do produto não pode ser nulo ou negativo!");
         }
-        Produto produto = produtoRepository.buscarPorId(id);
-        if (produto == null) {
-            throw new IllegalArgumentException("Produto não encontrado com o ID: " + id);
+
+        if (produto.getQuantidadeEstoque() == null || produto.getQuantidadeEstoque() < 0) {
+            throw new RuntimeException("A quantidade em estoque não pode ser negativa!");
         }
-        return produto;
+
+        return produtoRepository.save(produto);
     }
 
-    public void atualizar(Produto produto) throws IllegalArgumentException, SQLException {
-        if (produto.getId() == null) {
-            throw new IllegalArgumentException("ID do produto é obrigatório para atualização.");
-        }
-        buscarPorId(produto.getId()); // Garante que o produto existe antes de alterar
-        validarProduto(produto);
-        produtoRepository.atualizar(produto);
-    }
-
-    public void deletar(Long id) throws IllegalArgumentException, SQLException {
-        buscarPorId(id); // Valida existência
-        produtoRepository.deletar(id);
-    }
-
-    // === MOVIMENTAÇÕES DE ESTOQUE ===
-
-    /**
-     * Atualiza o estoque diretamente no banco.
-     * Aceita valores positivos (soma) ou negativos (subtração com validação).
-     */
-    public void atualizarEstoque(Long produtoId, int quantidade) throws IllegalArgumentException, SQLException {
-        if (produtoId == null || produtoId <= 0) {
-            throw new IllegalArgumentException("ID de produto inválido para atualização de estoque.");
+    @Transactional
+    public Produto adicionarEstoque(Long produtoId, Integer quantidade) {
+        if (quantidade == null || quantidade <= 0) {
+            throw new RuntimeException("A quantidade a ser adicionada deve ser maior que zero!");
         }
 
         Produto produto = buscarPorId(produtoId);
+        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() + quantidade);
 
-        // Se for uma baixa de estoque (quantidade negativa), valida se há saldo suficiente
-        if (quantidade < 0) {
-            int quantidadeParaDescontar = Math.abs(quantidade);
-            if (produto.getQuantidadeEstoque() < quantidadeParaDescontar) {
-                throw new IllegalArgumentException(
-                        "Estoque insuficiente! Estoque atual: " + produto.getQuantidadeEstoque() +
-                                " | Tentativa de baixa: " + quantidadeParaDescontar
-                );
-            }
-        }
-
-        produtoRepository.atualizarEstoque(produtoId, quantidade);
+        return produtoRepository.save(produto);
     }
 
-    /**
-     * Adiciona unidades ao estoque existente.
-     */
-    public void darEntradaEstoque(Long produtoId, Integer quantidade) throws IllegalArgumentException, SQLException {
-        if (quantidade == null || quantidade <= 0) {
-            throw new IllegalArgumentException("A quantidade de entrada deve ser maior que zero.");
+    @Transactional
+    public void deletar(Long id){
+        if (!produtoRepository.existsById(id)){
+            throw new RuntimeException("Produto não encontrado para e exclusão!");
         }
-        atualizarEstoque(produtoId, quantidade);
-    }
-
-    /**
-     * Remove unidades do estoque existente com segurança.
-     */
-    public void darBaixaEstoque(Long produtoId, Integer quantidade) throws IllegalArgumentException, SQLException {
-        if (quantidade == null || quantidade <= 0) {
-            throw new IllegalArgumentException("A quantidade de baixa deve ser maior que zero.");
-        }
-        atualizarEstoque(produtoId, -quantidade);
-    }
-
-    private void validarProduto(Produto produto) throws IllegalArgumentException {
-        if (produto.getNome() == null || produto.getNome().trim().isEmpty()) {
-            throw new IllegalArgumentException("O nome do produto é obrigatório.");
-        }
-        if (produto.getPreco() == null || produto.getPreco().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("O preço do produto deve ser maior que zero.");
-        }
-        if (produto.getQuantidadeEstoque() == null || produto.getQuantidadeEstoque() < 0) {
-            throw new IllegalArgumentException("A quantidade em estoque não pode ser negativa.");
-        }
+        produtoRepository.deleteById(id);
     }
 }

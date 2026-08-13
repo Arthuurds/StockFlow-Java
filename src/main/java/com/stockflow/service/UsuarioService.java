@@ -2,68 +2,49 @@ package com.stockflow.service;
 
 import com.stockflow.model.Usuario;
 import com.stockflow.repository.UsuarioRepository;
-import com.stockflow.repository.UsuarioRepositoryImpl;
-import com.stockflow.util.Password;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
+
 import java.util.List;
 
+
+@Service
+@RequiredArgsConstructor
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
-    public UsuarioService() {
-        this.usuarioRepository = new UsuarioRepositoryImpl();
+    @Transactional(readOnly = true)
+    public  List<Usuario> listarTodos(){
+        return usuarioRepository.findAll();
     }
 
-    public Usuario cadastrarUsuario(Usuario usuario) throws SQLException {
-        if (usuario.getLogin() == null || usuario.getLogin().trim().isEmpty()) {
-            throw new IllegalArgumentException("O login é obrigatório.");
-        }
-        if (usuario.getSenha() == null || usuario.getSenha().length() < 6) {
-            throw new IllegalArgumentException("A senha deve ter pelo menos 6 caracteres.");
-        }
-
-        if (usuarioRepository.buscarPorLogin(usuario.getLogin()) != null) {
-            throw new IllegalArgumentException("Já existe um usuário com o login: " + usuario.getLogin());
-        }
-
-        String senhaCriptografada = Password.hashPassword(usuario.getSenha());
-        usuario.setSenha(senhaCriptografada);
-
-        return usuarioRepository.salvar(usuario);
+    @Transactional(readOnly = true)
+    public Usuario buscarPorId(Long id){
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario não encontrado com o Id: " + id));
     }
 
-    public Usuario autenticar(String login, String senhaDigitada) throws SQLException {
-        if (login == null || senhaDigitada == null) {
-            throw new IllegalArgumentException("Login e senha são obrigatórios.");
-        }
+    @Transactional
+    public Usuario salvar(Usuario usuario){
+        usuarioRepository.findByLogin(usuario.getLogin())
+                .ifPresent(existente -> {
+                    if (!existente.getId().equals(usuario.getId())) {
+                        throw new RuntimeException("Já existe um usuário cadastrado com este login!");
+                    }
+                });
 
-        Usuario usuario = usuarioRepository.buscarPorLogin(login);
-
-        if (usuario == null || !Password.verificarSenha(senhaDigitada, usuario.getSenha())) {
-            throw new IllegalArgumentException("Login ou senha inválidos.");
-        }
-
-        System.out.println("🔓 Usuário " + usuario.getLogin() + " autenticado com sucesso!");
-        return usuario;
+        return usuarioRepository.save(usuario);
     }
 
-    public List<Usuario> listarTodos() throws SQLException {
-        return usuarioRepository.listarTodos();
-    }
 
-    public Usuario buscarPorId(Long id) throws IllegalArgumentException, SQLException {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID inválido para busca de usuário.");
+    @Transactional
+    public void deletar(Long id){
+        if (!usuarioRepository.existsById(id)) {
+            throw new RuntimeException("Usuario nãp encontrado para exclusão!");
         }
-
-        Usuario usuario = usuarioRepository.buscarPorId(id);
-
-        if (usuario == null) {
-            throw new IllegalArgumentException("Usuário não encontrado com o ID: " + id);
-        }
-
-        return usuario;
+        usuarioRepository.deleteById(id);
     }
 }

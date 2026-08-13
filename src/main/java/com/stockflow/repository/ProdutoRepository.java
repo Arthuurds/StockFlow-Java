@@ -1,20 +1,16 @@
 package com.stockflow.repository;
 
 import com.stockflow.model.Produto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
-public interface ProdutoRepository {
-    Produto salvar(Produto produto) throws SQLException;
-    List<Produto> listarTodos() throws SQLException;
-    Produto buscarPorId(Long id) throws SQLException;
-    void atualizar(Produto produto) throws SQLException;
-    void deletar(Long id) throws SQLException;
-    void atualizarEstoque(Long produtoId, int quantidade) throws SQLException;
+@Repository
+public interface ProdutoRepository extends JpaRepository<Produto, Long> {
+    List<Produto> findByCategoria(String categoria);
 
-    // --- MÉTODOS PARA TRANSAÇÃO (UTILIZADOS NO VENDA SERVICE) ---
-    int buscarEstoqueAtual(Long produtoId, Connection conn) throws SQLException;
-    void darBaixaEstoque(Long produtoId, Integer quantidade, Connection conn) throws SQLException;
+    List<Produto> findByQuantidadeEstoqueLessThan(Integer quantidadeEstoque);
+    List<Produto> findByNomeContainingIgnoreCase(String nome);
 }
+
