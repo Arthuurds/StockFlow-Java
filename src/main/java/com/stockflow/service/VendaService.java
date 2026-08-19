@@ -1,5 +1,8 @@
 package com.stockflow.service;
 
+import com.stockflow.exception.EstoqueInsuficienteException;
+import com.stockflow.exception.RecursoNaoEncontradoException;
+import com.stockflow.exception.RegraDeNegocioException;
 import com.stockflow.model.*;
 import com.stockflow.repository.ClienteRepository;
 import com.stockflow.repository.ProdutoRepository;
@@ -30,28 +33,28 @@ public class VendaService {
     @Transactional(readOnly = true)
     public Venda buscarPorId(Long id){
         return vendaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Venda não encontrada com o ID: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Venda não encontrada com o ID: " + id));
     }
 
     @Transactional
-    public Venda realizarVenda(Venda venda) {
+    public Venda realizarVenda(Venda venda) throws EstoqueInsuficienteException {
 
         // 1. Validação de itens
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
-            throw new RuntimeException("Uma venda não pode ser realizada sem itens!");
+            throw new RegraDeNegocioException("Uma venda não pode ser realizada sem itens!");
         }
 
         // 2. Busca e reanexa o Cliente cadastrado no banco (Evita Erro 1996)
         if (venda.getCliente() != null && venda.getCliente().getId() != null) {
             Cliente cliente = clienteRepository.findById(venda.getCliente().getId())
-                    .orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + venda.getCliente().getId()));
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado com ID: " + venda.getCliente().getId()));
             venda.setCliente(cliente);
         }
 
         // 3. Busca e reanexa o Usuário cadastrado no banco (Evita Erro 1996)
         if (venda.getUsuario() != null && venda.getUsuario().getId() != null) {
             Usuario usuario = usuarioRepository.findById(venda.getUsuario().getId())
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado com ID: " + venda.getUsuario().getId()));
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + venda.getUsuario().getId()));
             venda.setUsuario(usuario);
         }
 
@@ -63,10 +66,10 @@ public class VendaService {
             item.setVenda(venda);
 
             Produto produto = produtoRepository.findById(item.getProduto().getId())
-                    .orElseThrow(() -> new RuntimeException("Produto ID " + item.getProduto().getId() + " não encontrado!"));
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Produto ID " + item.getProduto().getId() + " não encontrado!"));
 
             if (produto.getQuantidadeEstoque() < item.getQuantidade()) {
-                throw new RuntimeException("Quantidade de estoque insuficiente para o produto: " + produto.getNome() +
+                throw new EstoqueInsuficienteException("Quantidade de estoque insuficiente para o produto: " + produto.getNome() +
                         " | Solicitado: " + item.getQuantidade() + " | Em estoque: " + produto.getQuantidadeEstoque());
             }
 

@@ -1,5 +1,7 @@
 package com.stockflow.service;
 
+import com.stockflow.exception.RecursoNaoEncontradoException;
+import com.stockflow.exception.RegraDeNegocioException;
 import com.stockflow.model.Produto;
 import com.stockflow.repository.ProdutoRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +27,7 @@ public class ProdutoService {
     @Transactional(readOnly = true)
     public Produto buscarPorId(Long id){
         return produtoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado com o Id: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado com o Id: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -41,11 +43,11 @@ public class ProdutoService {
     @Transactional
     public Produto salvar(Produto produto){
         if (produto.getPreco() == null || produto.getPreco().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("O preço do produto não pode ser nulo ou negativo!");
+            throw new RegraDeNegocioException("O preço do produto não pode ser nulo ou negativo!");
         }
 
         if (produto.getQuantidadeEstoque() == null || produto.getQuantidadeEstoque() < 0) {
-            throw new RuntimeException("A quantidade em estoque não pode ser negativa!");
+            throw new RegraDeNegocioException("A quantidade em estoque não pode ser negativa!");
         }
 
         return produtoRepository.save(produto);
@@ -54,7 +56,7 @@ public class ProdutoService {
     @Transactional
     public Produto adicionarEstoque(Long produtoId, Integer quantidade) {
         if (quantidade == null || quantidade <= 0) {
-            throw new RuntimeException("A quantidade a ser adicionada deve ser maior que zero!");
+            throw new RegraDeNegocioException("A quantidade a ser adicionada deve ser maior que zero!");
         }
 
         Produto produto = buscarPorId(produtoId);
@@ -66,7 +68,7 @@ public class ProdutoService {
     @Transactional
     public void deletar(Long id){
         if (!produtoRepository.existsById(id)){
-            throw new RuntimeException("Produto não encontrado para e exclusão!");
+            throw new RecursoNaoEncontradoException("Produto não encontrado para e exclusão!");
         }
         produtoRepository.deleteById(id);
     }

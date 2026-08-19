@@ -1,5 +1,6 @@
 package com.stockflow.controller;
 
+import com.stockflow.exception.EstoqueInsuficienteException;
 import com.stockflow.model.Venda;
 import com.stockflow.service.VendaService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class VendaController {
     }
 
     @PostMapping
-    public ResponseEntity<Venda> realizarVenda(@RequestBody Venda venda) {
+    public ResponseEntity<Venda> realizarVenda(@RequestBody Venda venda) throws EstoqueInsuficienteException {
         Venda novaVenda = vendaService.realizarVenda(venda);
         return ResponseEntity.status(HttpStatus.CREATED).body(novaVenda);
     }

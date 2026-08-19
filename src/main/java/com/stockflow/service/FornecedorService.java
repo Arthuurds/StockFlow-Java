@@ -1,5 +1,7 @@
 package com.stockflow.service;
 
+import com.stockflow.exception.RecursoNaoEncontradoException;
+import com.stockflow.exception.RegistroDuplicadoException;
 import com.stockflow.model.Fornecedor;
 import com.stockflow.repository.FornecedorRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,7 @@ public class FornecedorService {
     @Transactional(readOnly = true)
     public Fornecedor buscarPorId(Long id){
         return fornecedorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fornecedor não encontrado com esse Id: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Fornecedor não encontrado com esse Id: " + id));
     }
 
     @Transactional
@@ -31,7 +33,7 @@ public class FornecedorService {
         fornecedorRepository.findByCnpj(fornecedor.getCnpj())
                 .ifPresent(existente -> {
                     if (!existente.getId().equals(fornecedor.getId())) {
-                        throw new RuntimeException("Já existe outro fornecedor cadastrado com este CNPJ!");
+                        throw new RegistroDuplicadoException("Já existe outro fornecedor cadastrado com este CNPJ!");
                     }
                 });
         return fornecedorRepository.save(fornecedor);
@@ -40,7 +42,7 @@ public class FornecedorService {
     @Transactional
     public void deletar(Long id){
         if (!fornecedorRepository.existsById(id)) {
-            throw new RuntimeException("Forncedor não encontrado para exclusão!");
+            throw new RecursoNaoEncontradoException("Forncedor não encontrado para exclusão!");
         }
         fornecedorRepository.deleteById(id);
     }

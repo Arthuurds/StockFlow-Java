@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface VendaRepository extends JpaRepository<Venda, Long> {
-    List<Venda> finfByClienteId(Long clienteId);
+    List<Venda> findByClienteId(Long clienteId);
     List<Venda> findByUsuarioId(Long usuarioId);
     List<Venda> findByDataVendaBetween(LocalDateTime inicio, LocalDateTime fim);
 }
