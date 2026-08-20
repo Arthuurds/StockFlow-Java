@@ -3,6 +3,7 @@ package com.stockflow.controller;
 import com.stockflow.exception.EstoqueInsuficienteException;
 import com.stockflow.model.Venda;
 import com.stockflow.service.VendaService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/vendas")
+@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class VendaController {
 

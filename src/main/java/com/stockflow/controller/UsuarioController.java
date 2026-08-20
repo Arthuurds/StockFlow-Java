@@ -2,6 +2,7 @@ package com.stockflow.controller;
 
 import com.stockflow.model.Usuario;
 import com.stockflow.service.UsuarioService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/usuarios")
+@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class UsuarioController {
 
