@@ -1,6 +1,5 @@
 package com.stockflow.controller;
 
-import com.stockflow.exception.EstoqueInsuficienteException;
 import com.stockflow.model.Venda;
 import com.stockflow.service.VendaService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -30,7 +29,7 @@ public class VendaController {
     }
 
     @PostMapping
-    public ResponseEntity<Venda> realizarVenda(@RequestBody Venda venda) throws EstoqueInsuficienteException {
+    public ResponseEntity<Venda> realizarVenda(@RequestBody Venda venda) {
         Venda novaVenda = vendaService.realizarVenda(venda);
         return ResponseEntity.status(HttpStatus.CREATED).body(novaVenda);
     }

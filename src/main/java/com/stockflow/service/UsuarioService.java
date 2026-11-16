@@ -49,7 +49,7 @@ public class UsuarioService {
     @Transactional
     public void deletar(Long id){
         if (!usuarioRepository.existsById(id)) {
-            throw new RecursoNaoEncontradoException("Usuario nãp encontrado para exclusão!");
+            throw new RecursoNaoEncontradoException("Usuario não encontrado para exclusão!");
         }
         usuarioRepository.deleteById(id);
     }

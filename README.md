@@ -9,7 +9,8 @@ Com ela é possível cadastrar produtos, clientes, fornecedores e usuários, reg
 - **CRUD completo** de produtos, clientes, fornecedores e usuários
 - **Busca de produtos** por nome e por categoria
 - **Entrada de estoque** em um produto (`PATCH /produtos/{id}/estoque`)
-- **Registro de vendas** com vários itens: a API confere se há estoque suficiente para cada produto e desconta a quantidade vendida
+- **Registro de vendas** com vários itens: a API confere se a quantidade é válida e se há estoque suficiente para cada produto, desconta a quantidade vendida e calcula o total; tudo dentro de uma transação
+- **Validação de CPF e CNPJ** no cadastro de clientes e fornecedores
 - **Autenticação com JWT**: só o cadastro de usuário e o login são públicos; as demais rotas exigem token
 - **Tratamento centralizado de erros** (`GlobalExceptionHandler`), com exceções próprias para estoque insuficiente, registro duplicado e recurso não encontrado
 - **Documentação interativa** com Swagger / OpenAPI
@@ -36,6 +37,7 @@ src/main/java/com/stockflow
 ├── model         # Entidades: Produto, Cliente, Fornecedor, Usuario, Venda, ItemVenda
 ├── dto           # Objetos de entrada/saída (login, token)
 ├── exception     # Exceções personalizadas e handler global
+├── util          # Validação de CPF e CNPJ
 ├── infra/security# Configuração do Spring Security e filtro JWT
 └── database      # Script SQL e diagrama entidade-relacionamento
 ```
@@ -69,6 +71,15 @@ src/main/java/com/stockflow
    mvnw.cmd spring-boot:run      # Windows
    ```
 4. Acesse a documentação em **http://localhost:8080/swagger-ui.html**
+
+## Testes
+
+Os testes automatizados (JUnit 5 + Mockito) cobrem a regra de venda (baixa de estoque, cálculo do total, estoque insuficiente, quantidade inválida, produto inexistente) e a validação de CPF/CNPJ:
+
+```bash
+./mvnw test        # Linux / macOS
+mvnw.cmd test      # Windows
+```
 
 ## Endpoints principais
 

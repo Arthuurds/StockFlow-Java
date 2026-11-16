@@ -1,5 +1,7 @@
 package com.stockflow.service;
 
+import com.stockflow.exception.DocumentoInvalidoException;
+import com.stockflow.util.ValidarDocumento;
 import com.stockflow.exception.RecursoNaoEncontradoException;
 import com.stockflow.exception.RegistroDuplicadoException;
 import com.stockflow.model.Fornecedor;
@@ -30,6 +32,10 @@ public class FornecedorService {
 
     @Transactional
     public Fornecedor salvar(Fornecedor fornecedor){
+        if (!ValidarDocumento.isCnpjValido(fornecedor.getCnpj())) {
+            throw new DocumentoInvalidoException("CNPJ inválido!");
+        }
+
         fornecedorRepository.findByCnpj(fornecedor.getCnpj())
                 .ifPresent(existente -> {
                     if (!existente.getId().equals(fornecedor.getId())) {

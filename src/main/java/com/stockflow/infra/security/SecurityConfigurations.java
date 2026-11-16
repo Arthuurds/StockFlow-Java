@@ -31,7 +31,7 @@ public class SecurityConfigurations {
                 .authorizeHttpRequests(req -> {
                     // Rotas públicas
                     req.requestMatchers(HttpMethod.POST, "/login").permitAll();
-                    req.requestMatchers(HttpMethod.POST, "/usuarios").permitAll(); // <- ADICIONE ESTA LINHA
+                    req.requestMatchers(HttpMethod.POST, "/usuarios").permitAll();
                     req.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll();
 
                     // Todas as outras exigem token

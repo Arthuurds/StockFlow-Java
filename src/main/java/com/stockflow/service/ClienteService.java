@@ -1,17 +1,16 @@
 package com.stockflow.service;
 
+import com.stockflow.exception.DocumentoInvalidoException;
 import com.stockflow.exception.RecursoNaoEncontradoException;
 import com.stockflow.exception.RegistroDuplicadoException;
 import com.stockflow.model.Cliente;
-import com.stockflow.model.Fornecedor;
 import com.stockflow.repository.ClienteRepository;
+import com.stockflow.util.ValidarDocumento;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static org.springframework.data.util.ClassUtils.ifPresent;
 
 
 @Service
@@ -34,10 +33,14 @@ public class ClienteService {
 
     @Transactional
     public Cliente salvar(Cliente cliente){
+        if (!ValidarDocumento.isCpfOuCnpjValido(cliente.getCpfCnpj())) {
+            throw new DocumentoInvalidoException("CPF ou CNPJ inválido!");
+        }
+
         clienteRepository.findByCpfCnpj(cliente.getCpfCnpj())
                 .ifPresent(existente -> {
                     if (!existente.getId().equals(cliente.getId())) {
-                        throw new RegistroDuplicadoException("Já existe outro fornecedor cadastrado com este CNPJ!");
+                        throw new RegistroDuplicadoException("Já existe outro cliente cadastrado com este CPF/CNPJ!");
                     }
                 });
         return clienteRepository.save(cliente);
