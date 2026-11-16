@@ -37,21 +37,21 @@ public class VendaService {
     }
 
     @Transactional
-    public Venda realizarVenda(Venda venda) throws EstoqueInsuficienteException {
+    public Venda realizarVenda(Venda venda) {
 
         // 1. Validação de itens
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
             throw new RegraDeNegocioException("Uma venda não pode ser realizada sem itens!");
         }
 
-        // 2. Busca e reanexa o Cliente cadastrado no banco (Evita Erro 1996)
+        // 2. Busca e reanexa o Cliente cadastrado no banco para usar a entidade gerenciada pelo JPA
         if (venda.getCliente() != null && venda.getCliente().getId() != null) {
             Cliente cliente = clienteRepository.findById(venda.getCliente().getId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado com ID: " + venda.getCliente().getId()));
             venda.setCliente(cliente);
         }
 
-        // 3. Busca e reanexa o Usuário cadastrado no banco (Evita Erro 1996)
+        // 3. Busca e reanexa o Usuário cadastrado no banco para usar a entidade gerenciada pelo JPA
         if (venda.getUsuario() != null && venda.getUsuario().getId() != null) {
             Usuario usuario = usuarioRepository.findById(venda.getUsuario().getId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + venda.getUsuario().getId()));
@@ -64,6 +64,10 @@ public class VendaService {
         for (ItemVenda item : venda.getItens()) {
 
             item.setVenda(venda);
+
+            if (item.getQuantidade() == null || item.getQuantidade() <= 0) {
+                throw new RegraDeNegocioException("A quantidade de cada item deve ser maior que zero!");
+            }
 
             Produto produto = produtoRepository.findById(item.getProduto().getId())
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Produto ID " + item.getProduto().getId() + " não encontrado!"));

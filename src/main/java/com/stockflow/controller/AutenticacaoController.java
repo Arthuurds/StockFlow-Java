@@ -22,7 +22,7 @@ public class AutenticacaoController {
     }
 
     @PostMapping
-    public ResponseEntity<DadosTokenJWT> efetuaringin(@RequestBody DadosAutenticacao dados) {
+    public ResponseEntity<DadosTokenJWT> efetuarLogin(@RequestBody DadosAutenticacao dados) {
         // 1. Converte o DTO para o objeto de autenticação do Spring
         var authenticationToken = new UsernamePasswordAuthenticationToken(dados.getLogin(), dados.getSenha());
 
